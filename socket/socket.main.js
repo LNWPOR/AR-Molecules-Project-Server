@@ -1,20 +1,19 @@
 var shortId 	=	require('shortid'),
 	User 		= 	require('../models/user'),
-	Score 		= 	require('../models/score'),
+	// Score 		= 	require('../models/score'),
 	bcrypt      =   require('bcrypt-nodejs');
 
 module.exports = function(io){	
-	var clients = []; // who is in lobby scene
-	
-	var roomTotal = 3;
-	var maxRoomPlayer  = 2;
+	var clients = [];
+	// var roomTotal = 3;
+	// var maxRoomPlayer  = 2;
 
-	var rooms = [];
-	for (var i = 0; i < roomTotal; i++) {
-		rooms[i] = {
-			players:[]
-		}
-	}
+	// var rooms = [];
+	// for (var i = 0; i < roomTotal; i++) {
+	// 	rooms[i] = {
+	// 		players:[]
+	// 	}
+	// }
 
 	// var playerReadyCount = 0;
 	io.on('connection', function (socket){
@@ -62,25 +61,17 @@ module.exports = function(io){
 				}
 				
 			});
-
-			
-		    
 		});
 
-		socket.on("LOGIN", function (data){
+		socket.on("SIGNIN", function (data){
 
 			User.findOne ({username: data.username}, function(err, user) {
 				if(user){
 					if(bcrypt.compareSync(data.password, user.password)){
-						console.log(user.username + " login success");
+						console.log(user.username + " Signin success");
 						currentUser = {
 							id:user._id,
-							name:user.username,
-							highScore:user.highScore,
-							playerNumber:null,
-							roomNumber:null,
-							position:"0,0,0",
-							rotation:"0,0,0"
+							username:user.username
 						}
 						socket.emit("CONNECTED", currentUser );
 						listOfUsers();
@@ -91,139 +82,139 @@ module.exports = function(io){
 		  	})
 		});
 
-		socket.on("USER_CONNECTED_LOBBY", function(){
-			// console.log("server: USER_CONNECTED_LOBBY");
-			clients.push(currentUser);
-			socket.broadcast.emit("USER_CONNECTED_LOBBY", currentUser );
-		});
+		// socket.on("USER_CONNECTED_LOBBY", function(){
+		// 	// console.log("server: USER_CONNECTED_LOBBY");
+		// 	clients.push(currentUser);
+		// 	socket.broadcast.emit("USER_CONNECTED_LOBBY", currentUser );
+		// });
 
-		socket.on("USER_CONNECTED_ROOM", function(data){
+		// socket.on("USER_CONNECTED_ROOM", function(data){
 
 
 
-			var EnterRoomStatus;
-			var EnterRoomStatusForOther;
-			var roomNumber = parseInt(data.roomNumber);
+		// 	var EnterRoomStatus;
+		// 	var EnterRoomStatusForOther;
+		// 	var roomNumber = parseInt(data.roomNumber);
 
-			if (rooms[roomNumber].players.length < maxRoomPlayer) {
-				rooms[roomNumber].players.push(currentUser);
-				currentUser.playerNumber = rooms[roomNumber].players.length-1;
-				currentUser.roomNumber = roomNumber;
+		// 	if (rooms[roomNumber].players.length < maxRoomPlayer) {
+		// 		rooms[roomNumber].players.push(currentUser);
+		// 		currentUser.playerNumber = rooms[roomNumber].players.length-1;
+		// 		currentUser.roomNumber = roomNumber;
 
-				console.log("User " + currentUser.name + " is playerNumber " + currentUser.playerNumber + " in roomNumber " + currentUser.roomNumber);
+		// 		console.log("User " + currentUser.name + " is playerNumber " + currentUser.playerNumber + " in roomNumber " + currentUser.roomNumber);
 				
-				EnterRoomStatus = {
-					canEnterRoom:true,
-					roomSelected:rooms[roomNumber]
-				};
+		// 		EnterRoomStatus = {
+		// 			canEnterRoom:true,
+		// 			roomSelected:rooms[roomNumber]
+		// 		};
 
-				EnterRoomStatusForOther = {
-					userNumberEntered:rooms[roomNumber].players.length-1,
-					userNameEntered:currentUser.name,
-					roomNumberEntered:roomNumber
-				};
-				socket.broadcast.emit("OTHER_USER_CONNECTED_ROOM", EnterRoomStatusForOther );
+		// 		EnterRoomStatusForOther = {
+		// 			userNumberEntered:rooms[roomNumber].players.length-1,
+		// 			userNameEntered:currentUser.name,
+		// 			roomNumberEntered:roomNumber
+		// 		};
+		// 		socket.broadcast.emit("OTHER_USER_CONNECTED_ROOM", EnterRoomStatusForOther );
 
 				
-			}
-			else{
-				EnterRoomStatus = {
-					canEnterRoom:false
-				}
-			}
-			socket.emit("USER_CONNECTED_ROOM",EnterRoomStatus);
+		// 	}
+		// 	else{
+		// 		EnterRoomStatus = {
+		// 			canEnterRoom:false
+		// 		}
+		// 	}
+		// 	socket.emit("USER_CONNECTED_ROOM",EnterRoomStatus);
 
 			
 			
-		});
+		// });
 
-		socket.on("GET_CONNECTED_LOBBY_USER", function(){
-			// console.log("GET_CONNECTED_LOBBY_USER");
-			var onlineUser = {
-				totalClients:clients.length,
-				clients:clients
-			}
-			socket.emit("GET_CONNECTED_LOBBY_USER", onlineUser );
-		});
+		// socket.on("GET_CONNECTED_LOBBY_USER", function(){
+		// 	// console.log("GET_CONNECTED_LOBBY_USER");
+		// 	var onlineUser = {
+		// 		totalClients:clients.length,
+		// 		clients:clients
+		// 	}
+		// 	socket.emit("GET_CONNECTED_LOBBY_USER", onlineUser );
+		// });
 
-		socket.on("GET_CONNECTED_ROOM_USER", function(){
-			// console.log("GET_CONNECTED_LOBBY_USER");
-			var currentRoomsStatus = {
-				totalRooms:rooms.length,
-				rooms:rooms,
-				maxRoomPlayer:maxRoomPlayer
-			}
-			socket.emit("GET_CONNECTED_ROOM_USER", currentRoomsStatus );
-		});
+		// socket.on("GET_CONNECTED_ROOM_USER", function(){
+		// 	// console.log("GET_CONNECTED_LOBBY_USER");
+		// 	var currentRoomsStatus = {
+		// 		totalRooms:rooms.length,
+		// 		rooms:rooms,
+		// 		maxRoomPlayer:maxRoomPlayer
+		// 	}
+		// 	socket.emit("GET_CONNECTED_ROOM_USER", currentRoomsStatus );
+		// });
 
-		socket.on("ROOM_READY", function(data){
-			console.log(data);
-			var result = {
-				roomNumber:parseInt(data.roomNumber)
-			}
-			socket.emit("ROOM_READY",result);
-			socket.broadcast.emit("ROOM_READY",result);
-		});
+		// socket.on("ROOM_READY", function(data){
+		// 	console.log(data);
+		// 	var result = {
+		// 		roomNumber:parseInt(data.roomNumber)
+		// 	}
+		// 	socket.emit("ROOM_READY",result);
+		// 	socket.broadcast.emit("ROOM_READY",result);
+		// });
 
-		socket.on("UPDATE_OTHER_PLAYER", function(data){
-			// socket.emit("UPDATE_OTHER_PLAYER");
-			currentUser.position = data.position;
-			currentUser.rotation = data.rotation;
-			socket.broadcast.emit("UPDATE_OTHER_PLAYER",currentUser);
-		});
+		// socket.on("UPDATE_OTHER_PLAYER", function(data){
+		// 	// socket.emit("UPDATE_OTHER_PLAYER");
+		// 	currentUser.position = data.position;
+		// 	currentUser.rotation = data.rotation;
+		// 	socket.broadcast.emit("UPDATE_OTHER_PLAYER",currentUser);
+		// });
 
-		socket.on("GO_BACK_READY", function(data){
-			rooms[parseFloat(data.roomNumber)] = {
-				players:[]
-			}
-			console.log(data);
-			var score = new Score({ 
-				scores:parseFloat(data.scores) ,
-				player1Username:data.player1,
-				player2Username:data.player2
-			});
-			score.save(function(err) {
-			    if(err) {
-			     	console.log(err);
-			     	var result = {
-						status:0
-					}
-					socket.emit("GO_BACK_READY", result );
-					socket.broadcast.emit("GO_BACK_READY",result);
-			    } else {
-			      	console.log("new score saved.");
-			      	var result = {
-						status:1
-					}
-					socket.emit("GO_BACK_READY", result );
-					socket.broadcast.emit("GO_BACK_READY",result);
-			    }
-			});
+		// socket.on("GO_BACK_READY", function(data){
+		// 	rooms[parseFloat(data.roomNumber)] = {
+		// 		players:[]
+		// 	}
+		// 	console.log(data);
+		// 	var score = new Score({ 
+		// 		scores:parseFloat(data.scores) ,
+		// 		player1Username:data.player1,
+		// 		player2Username:data.player2
+		// 	});
+		// 	score.save(function(err) {
+		// 	    if(err) {
+		// 	     	console.log(err);
+		// 	     	var result = {
+		// 				status:0
+		// 			}
+		// 			socket.emit("GO_BACK_READY", result );
+		// 			socket.broadcast.emit("GO_BACK_READY",result);
+		// 	    } else {
+		// 	      	console.log("new score saved.");
+		// 	      	var result = {
+		// 				status:1
+		// 			}
+		// 			socket.emit("GO_BACK_READY", result );
+		// 			socket.broadcast.emit("GO_BACK_READY",result);
+		// 	    }
+		// 	});
 
 			
-		});
+		// });
 
-		socket.on("GET_ROOM", function(data){
-			// socket.emit("UPDATE_OTHER_PLAYER");
-			var roomSent = {
-				rooms:rooms[parseInt(data.roomNumber)]
-			}
-			socket.emit("GET_ROOM",roomSent);
-		});
+		// socket.on("GET_ROOM", function(data){
+		// 	// socket.emit("UPDATE_OTHER_PLAYER");
+		// 	var roomSent = {
+		// 		rooms:rooms[parseInt(data.roomNumber)]
+		// 	}
+		// 	socket.emit("GET_ROOM",roomSent);
+		// });
 
-		socket.on("SHOOT", function(data){
-			// socket.emit("UPDATE_OTHER_PLAYER");
-			// var roomSent = {
-			// 	rooms:rooms[parseInt(data.roomNumber)]
-			// }
-			// console.log(data);
+		// socket.on("SHOOT", function(data){
+		// 	// socket.emit("UPDATE_OTHER_PLAYER");
+		// 	// var roomSent = {
+		// 	// 	rooms:rooms[parseInt(data.roomNumber)]
+		// 	// }
+		// 	// console.log(data);
 
-			var bullet = {
-				position:data.position
-			}
-			socket.emit("SHOOT",bullet);
-			socket.broadcast.emit("SHOOT",bullet);
-		});
+		// 	var bullet = {
+		// 		position:data.position
+		// 	}
+		// 	socket.emit("SHOOT",bullet);
+		// 	socket.broadcast.emit("SHOOT",bullet);
+		// });
 
 	// 	socket.on("PLAY_REQUEST", function (){
 
@@ -293,12 +284,12 @@ module.exports = function(io){
 			};
 		}
 
-		removePlayerRoom = function(){
-			socket.broadcast.emit('USER_DISCONNECTED_ROOM',currentUser);
+		// removePlayerRoom = function(){
+		// 	socket.broadcast.emit('USER_DISCONNECTED_ROOM',currentUser);
 
-			console.log("User " + currentUser.name + " as PlayerNumber " + currentUser.playerNumber + " is logout from roomNumber " + currentUser.roomNumber);
-			rooms[currentUser.roomNumber].players.splice(currentUser.playerNumber,1);
-		}
+		// 	console.log("User " + currentUser.name + " as PlayerNumber " + currentUser.playerNumber + " is logout from roomNumber " + currentUser.roomNumber);
+		// 	rooms[currentUser.roomNumber].players.splice(currentUser.playerNumber,1);
+		// }
 
 
 	});
