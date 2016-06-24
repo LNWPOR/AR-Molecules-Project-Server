@@ -1,0 +1,5 @@
+applications:
+- name: ar-molecules-project
+  memory: 128M
+  command: node server.js
+  
