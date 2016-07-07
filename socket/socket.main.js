@@ -1,6 +1,6 @@
 var shortId 	=	require('shortid'),
 	User 		= 	require('../models/user'),
-	// Score 		= 	require('../models/score'),
+	Molecule    = 	require('../models/molecule'),
 	bcrypt      =   require('bcrypt-nodejs');
 
 module.exports = function(io){	
@@ -26,60 +26,16 @@ module.exports = function(io){
 		socket.emit("NET_AVARIABLE",result);
 
 
-		socket.on("SIGNUP", function (data){
-			User.findOne ({username: data.username}, function(err, user) {
-				if(user){
-					console.log(data.username + " already exist");
-					var signUpResult = {
-						status:0
-					}
-					socket.emit("SIGNUP_READY", signUpResult );
-				}else if(!user){
-					var hash = bcrypt.hashSync(data.password);
-					var user = new User({ username:data.username ,password: hash ,highScore:0});
-					user.save(function(err) {
-					    if(err) {
-					     	console.log(err);
-					     	var signUpResult = {
-								status:0
-							}
-							socket.emit("SIGNUP_READY", signUpResult );
-					    } else {
-					      	console.log('user: ' + user.username + " saved.");
-					      	var signUpResult = {
-								status:1
-							}
-							socket.emit("SIGNUP_READY", signUpResult );
-					    }
-					});
-				}else{
-					console.log(err);
-					var signUpResult = {
-						status:0
-					}
-					socket.emit("SIGNUP_READY", signUpResult );
-				}
-				
-			});
+		socket.on("SIGNUP", function(data){
+			onSignUp(data);
 		});
 
-		socket.on("SIGNIN", function (data){
+		socket.on("SIGNIN", function(data){
+			onSignIn(data);
+		});
 
-			User.findOne ({username: data.username}, function(err, user) {
-				if(user){
-					if(bcrypt.compareSync(data.password, user.password)){
-						console.log(user.username + " Signin success");
-						currentUser = {
-							id:user._id,
-							username:user.username
-						}
-						socket.emit("CONNECTED", currentUser );
-						listOfUsers();
-					}
-				}else{
-					console.log(err);
-				}  
-		  	})
+		socket.on("ADD_MOLECULE", function(data){
+			onAddMolecule(data);
 		});
 
 		// socket.on("USER_CONNECTED_LOBBY", function(){
@@ -291,11 +247,76 @@ module.exports = function(io){
 		// 	rooms[currentUser.roomNumber].players.splice(currentUser.playerNumber,1);
 		// }
 
+		onSignUp = function(data){
+			User.findOne ({username: data.username}, function(err, user) {
+				if(user){
+					console.log(data.username + " already exist");
+					var signUpResult = {
+						status:0
+					}
+					socket.emit("SIGNUP_READY", signUpResult );
+				}else if(!user){
+					var hash = bcrypt.hashSync(data.password);
+					var user = new User({ username:data.username ,password: hash ,highScore:0});
+					user.save(function(err) {
+					    if(err) {
+					     	console.log(err);
+					     	var signUpResult = {
+								status:0
+							}
+							socket.emit("SIGNUP_READY", signUpResult );
+					    } else {
+					      	console.log('user: ' + user.username + " saved.");
+					      	var signUpResult = {
+								status:1
+							}
+							socket.emit("SIGNUP_READY", signUpResult );
+					    }
+					});
+				}else{
+					console.log(err);
+					var signUpResult = {
+						status:0
+					}
+					socket.emit("SIGNUP_READY", signUpResult );
+				}
+			});
+		}
 
+		onSignIn = function(data){
+			User.findOne ({username: data.username}, function(err, user) {
+				if(user){
+					if(bcrypt.compareSync(data.password, user.password)){
+						console.log(user.username + " Signin success");
+						currentUser = {
+							id:user._id,
+							username:user.username
+						}
+						socket.emit("CONNECTED", currentUser );
+						listOfUsers();
+					}
+				}else{
+					console.log(err);
+				}  
+		  	})
+		}
+
+		onAddMolecule = function(data){
+			// console.log(data);
+			var molecule = new Molecule(data);
+			molecule.save(function(err) {
+			    if(err) {
+			     	console.log(err);
+			    } else {
+			      	console.log(molecule.name + " saved.");
+			  //     	var signUpResult = {
+					// 	status:1
+					// }
+					// socket.emit("SIGNUP_READY", signUpResult );
+			    }
+			});
+		}
 	});
-
-	
-
 
 	listOfUsers = function (){
 		for( var i = 0; i < clients.length; i++ ){
