@@ -5,17 +5,7 @@ var shortId 	=	require('shortid'),
 
 module.exports = function(io){	
 	var clients = [];
-	// var roomTotal = 3;
-	// var maxRoomPlayer  = 2;
 
-	// var rooms = [];
-	// for (var i = 0; i < roomTotal; i++) {
-	// 	rooms[i] = {
-	// 		players:[]
-	// 	}
-	// }
-
-	// var playerReadyCount = 0;
 	io.on('connection', function (socket){
 		console.log("socket.io avariable");
 		var currentUser;
@@ -38,21 +28,13 @@ module.exports = function(io){
 			onAddMolecule(data);
 		});
 
-		socket.on("GET_mainEditMoleculeJSON",function(data){
-			// console.log(data);
-			// var signUpResult = {
-			// 	status:0
-			// }
-			// socket.emit("GET_mainEditMoleculeJSON", signUpResult );
-
-			onGetMolecule(data);
-			
+		socket.on("GET_All_mainEditMoleculeJSON",function(){
+			onGetAllMolecule();
 		});
 
 
 		socket.on("disconnect", function (){
 			removeUserLobby();
-			// removePlayerRoom();
 		});
 
 		removeUserLobby = function(){
@@ -67,13 +49,6 @@ module.exports = function(io){
 				};
 			};
 		}
-
-		// removePlayerRoom = function(){
-		// 	socket.broadcast.emit('USER_DISCONNECTED_ROOM',currentUser);
-
-		// 	console.log("User " + currentUser.name + " as PlayerNumber " + currentUser.playerNumber + " is logout from roomNumber " + currentUser.roomNumber);
-		// 	rooms[currentUser.roomNumber].players.splice(currentUser.playerNumber,1);
-		// }
 
 		onSignUp = function(data){
 			User.findOne ({username: data.username}, function(err, user) {
@@ -145,18 +120,38 @@ module.exports = function(io){
 			});
 		}
 
-		onGetMolecule = function(data){
-			Molecule.findOne ({name: data.name}, function(err, molecule) {
-				if(molecule){
-					mainMolecule = {
-						name:molecule.name,
-						ownerID:molecule.ownerID,
-						moleculeObjectsList:molecule.moleculeObjectsList
+		// onGetMolecule = function(data){
+		// 	Molecule.find ({name: data.name}, function(err, molecule) {
+		// 		if(molecule){
+		// 			mainMolecule = {
+		// 				name:molecule.name,
+		// 				ownerID:molecule.ownerID,
+		// 				moleculeObjectsList:molecule.moleculeObjectsList
+		// 			}
+		// 			socket.emit("GET_mainEditMoleculeJSON", mainMolecule );
+		// 		}else{
+		// 			console.log(err);
+		// 		}  
+		//   	});
+		// }
+
+		onGetAllMolecule = function(){
+
+			Molecule.find(function(err, molecules) {
+				if(molecules){
+					//console.log(molecules);
+					for(var i = 0 ; i < molecules.length;i++){
+						molecule = {
+							name:molecules[i].name,
+							ownerID:molecules[i].ownerID,
+							moleculeObjectsList:molecules[i].moleculeObjectsList
+						}
+						socket.emit("GET_All_mainEditMoleculeJSON", molecule );
 					}
-					socket.emit("GET_mainEditMoleculeJSON", mainMolecule );
+					
 				}else{
 					console.log(err);
-				}  
+				}
 		  	});
 		}
 	});
