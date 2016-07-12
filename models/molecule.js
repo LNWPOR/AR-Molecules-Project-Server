@@ -3,7 +3,6 @@ var mongoose = require('mongoose'),
     
 var Molecule = new Schema({
 		name: String,
-        description : String,
         ownerID : String,
         moleculeObjectsList: [{}]
 });    
