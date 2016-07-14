@@ -136,7 +136,11 @@ module.exports = function(io){
 		// }
 
 		onGetAllMolecule = function(){
-
+			//console.log("gg");
+			// molecule = {
+			// 	name:"gg"
+			// }
+			//socket.emit("GET_All_mainEditMoleculeJSON", molecule );
 			Molecule.find(function(err, molecules) {
 				if(molecules){
 					//console.log(molecules);
