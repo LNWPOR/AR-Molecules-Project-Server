@@ -52,55 +52,73 @@ module.exports = function(io){
 
 		onSignUp = function(data){
 			User.findOne ({username: data.username}, function(err, user) {
+				var dataSent;
 				if(user){
 					console.log(data.username + " already exist");
-					var signUpResult = {
-						status:0
+					dataSent = {
+						status:0,
+						log:"This username is already exist"
 					}
-					socket.emit("SIGNUP_READY", signUpResult );
 				}else if(!user){
 					var hash = bcrypt.hashSync(data.password);
 					var user = new User({ username:data.username ,password: hash ,highScore:0});
 					user.save(function(err) {
 					    if(err) {
 					     	console.log(err);
-					     	var signUpResult = {
-								status:0
+					     	dataSent = {
+								status:0,
+								log:"some error occur during the save.please try again later"
 							}
-							socket.emit("SIGNUP_READY", signUpResult );
 					    } else {
 					      	console.log('user: ' + user.username + " saved.");
-					      	var signUpResult = {
-								status:1
+					      	dataSent = {
+								status:1,
+								log:"signup success"
 							}
-							socket.emit("SIGNUP_READY", signUpResult );
 					    }
 					});
 				}else{
 					console.log(err);
-					var signUpResult = {
-						status:0
+					var dataSent = {
+						status:0,
+						log:"some error occur"
 					}
-					socket.emit("SIGNUP_READY", signUpResult );
 				}
+				socket.emit("SIGNUP_READY", dataSent );
 			});
 		}
 
 		onSignIn = function(data){
 			User.findOne ({username: data.username}, function(err, user) {
+				var dataSent;
 				if(user){
 					if(bcrypt.compareSync(data.password, user.password)){
-						console.log(user.username + " Signin success");
+						console.log(user.username + " signin success");
 						currentUser = {
 							id:user._id,
 							username:user.username
 						}
-						socket.emit("CONNECTED", currentUser );
+						dataSent = {
+							status:1,
+							log:"signin success",
+							id:user._id,
+							username:user.username
+						}
 						listOfUsers();
+					}else{
+						dataSent = {
+							status:0,
+							log:"wrong username or password"
+						}
 					}
 				}else{
 					console.log(err);
-				}  
+					dataSent = {
+						status:0,
+						log:"cannot find your username"
+					}
+				}
+				socket.emit("CONNECTED", dataSent);
 		  	})
 		}
 
@@ -108,15 +126,22 @@ module.exports = function(io){
 			// console.log(data);
 			var molecule = new Molecule(data);
 			molecule.save(function(err) {
+				var dataSent;
 			    if(err) {
 			     	console.log(err);
+			     	var dataSent = {
+						status:1,
+						log:"some error occur during the save.please try again later"
+					}
+					
 			    } else {
+			    	var dataSent = {
+						status:1,
+						log:"save success"
+					}
 			      	console.log(molecule.name + " saved.");
-			  //     	var signUpResult = {
-					// 	status:1
-					// }
-					// socket.emit("SIGNUP_READY", signUpResult );
 			    }
+			    socket.emit("SAVED", dataSent);
 			});
 		}
 
@@ -136,25 +161,28 @@ module.exports = function(io){
 		// }
 
 		onGetAllMolecule = function(){
-			//console.log("gg");
-			// molecule = {
-			// 	name:"gg"
-			// }
-			//socket.emit("GET_All_mainEditMoleculeJSON", molecule );
 			Molecule.find(function(err, molecules) {
+				var dataSent;
 				if(molecules){
 					//console.log(molecules);
 					for(var i = 0 ; i < molecules.length;i++){
-						molecule = {
+						dataSent = {
+							status:1,
+							log:"get molecules success",
 							name:molecules[i].name,
 							ownerID:molecules[i].ownerID,
 							moleculeObjectsList:molecules[i].moleculeObjectsList
 						}
-						socket.emit("GET_All_mainEditMoleculeJSON", molecule );
+						socket.emit("GET_All_mainEditMoleculeJSON", dataSent);
 					}
 					
 				}else{
 					console.log(err);
+					dataSent = {
+						status:0,
+						log:"some error occur during the save.please try again later"
+					}
+					socket.emit("GET_All_mainEditMoleculeJSON", dataSent);
 				}
 		  	});
 		}
