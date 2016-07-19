@@ -24,6 +24,10 @@ module.exports = function(io){
 			onSignIn(data);
 		});
 
+		socket.on("SIGNOUT", function(){
+			onUserDisconnect();
+		});
+
 		socket.on("ADD_MOLECULE", function(data){
 			onAddMolecule(data);
 		});
@@ -32,21 +36,16 @@ module.exports = function(io){
 			onGetAllMolecule();
 		});
 
-
 		socket.on("disconnect", function (){
-			removeUserLobby();
+			onUserDisconnect();
 		});
 
-		removeUserLobby = function(){
-			// socket.broadcast.emit('USER_DISCONNECTED',currentUser);
-			for (var i = 0; i < clients.length; i++) {
-				if (clients[i].name === currentUser.name && clients[i].id === currentUser.id) {
-
-					console.log("User "+clients[i].name+" id: "+clients[i].id+" has disconnected");
-					clients.splice(i,1);
-					// playerReadyCount--;
-				};
-			};
+		onUserDisconnect = function(){
+			currentUser = null;
+			var dataSent = {
+				log:"signout success"
+			}
+			socket.emit('USER_DISCONNECTED', dataSent);
 		}
 
 		onSignUp = function(data){
@@ -86,8 +85,6 @@ module.exports = function(io){
 					}
 					socket.emit("SIGNUP_READY", dataSent );
 				}
-
-				//socket.emit("SIGNUP_READY", dataSent );
 			});
 		}
 
@@ -107,7 +104,6 @@ module.exports = function(io){
 							username:user.username
 						}
 						socket.emit("CONNECTED", dataSent);
-						listOfUsers();
 					}else{
 						var dataSent = {
 							status:0,
@@ -205,7 +201,6 @@ module.exports = function(io){
 						}
 						socket.emit("GET_All_mainEditMoleculeJSON", dataSent);
 					}
-					
 				}else{
 					console.log(err);
 					var dataSent = {
